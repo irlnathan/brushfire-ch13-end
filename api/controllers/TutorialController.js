@@ -216,10 +216,60 @@ module.exports = {
 
   createTutorial: function(req, res) {
 
-    // Create a tutorial record using `username`, `title`, and `description`
+    /*
+     __   __    _ _    _      _   _          
+     \ \ / /_ _| (_)__| |__ _| |_(_)___ _ _  
+      \ V / _` | | / _` / _` |  _| / _ \ ' \ 
+       \_/\__,_|_|_\__,_\__,_|\__|_\___/_||_|
+                                         
+    */
+    
+    if (!_.isString(req.param('title'))) {
+      return res.badRequest();
+    }
 
-    // Pass back the `id` of the new record, simulate `1` for now.
-    return res.json({id: 1});
+    if (!_.isString(req.param('description'))) {
+      return res.badRequest();
+    }
+
+    // Find the user that's adding a tutorial
+    User.findOne({
+      id: req.session.userId
+    }).exec(function(err, foundUser){
+      if (err) return res.negotiate;
+      if (!foundUser) return res.notFound();
+
+      // Create the new tutorial in the tutorial model
+      Tutorial.create({
+        title: req.param('title'),
+        description: req.param('description'),
+        owner: { username: foundUser.username},
+        // videos: []
+      }).exec(function(err, createdTutorial){
+        if (err) return res.negotiate(err);
+
+        // Update the user to contain the new tutorial
+        foundUser.tutorials = [];
+        foundUser.tutorials.push({
+          title: req.param('title'),
+          description: req.param('description'),
+          created: foundUser.createdAt,
+          updated: foundUser.updatedAt,
+          id: foundUser.id
+        });
+
+        User.update({id: req.session.userId})
+        .set({tutorials: foundUser.tutorials})
+        .exec(function(err){
+          if (err) return res.negotiate(err);
+
+          // return the new tutorial id
+          return res.json({
+            id: createdTutorial.id
+          });
+        });
+      });
+    });
   },
 
   addVideo: function(req, res) {
