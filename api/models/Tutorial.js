@@ -9,73 +9,41 @@ module.exports = {
 
   attributes: {
 
-    email: {
-      type: 'string',
-      email: 'true',
-      unique: 'true'
-    },
-
-    username: {
-      type: 'string',
-      unique: 'true'
-    },
-
-    encryptedPassword: {
+    title: {
       type: 'string'
     },
 
-    gravatarURL: {
+    description: {
       type: 'string'
     },
 
-    deleted: {
-      type: 'boolean'
+    owner: {
+      model: 'user'
     },
 
-    admin: {
-      type: 'boolean'
-    },
-
-    banned: {
-      type: 'boolean'
-    },
-
-    passwordRecoveryToken: {
-      type: 'string'
-    },
-
-    tutorials: {
-      type: 'json'
-    },
-
-    // tutorials: {
-    //   collection: 'tutorial',
-    //   via: 'owner'
+    //  owner: {
+    //   type: 'json'
     // },
+
+     
+    // An array of video ids representing the manual (human) ordering of videos. 
+    videoOrder: {
+      // e.g.
+      // [
+      //   3
+      // ]
+      type: 'json'
+      // (this is always ok because there will never be millions of videos per tutorial)
+    },
+    
+    videos: {
+      collection: 'video',
+      via: 'tutorialAssoc'
+    },
 
     ratings: {
       collection: 'rating',
-      via: 'user' // TODO: `byUser` (so readers don't get confused and think it _has_ to be the model name)
-    },
-
-    // Who is following me?
-    followers: {
-      collection: 'user',
-      via: 'following'
-    },
-
-    // Who am I following?
-    following: {
-      collection: 'user',
-      via: 'followers'
-    },
-
-    toJSON: function() {
-      var obj = this.toObject();
-      delete obj.password;
-      delete obj.confirmation;
-      delete obj.encryptedPassword;
-      return obj;
+      via: 'tutorial'
     }
   }
 };

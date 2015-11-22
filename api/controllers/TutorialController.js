@@ -235,7 +235,8 @@ module.exports = {
     // Find the user that's adding a tutorial
     User.findOne({
       id: req.session.userId
-    }).exec(function(err, foundUser){
+    })
+    .exec(function(err, foundUser){
       if (err) return res.negotiate;
       if (!foundUser) return res.notFound();
 
@@ -243,30 +244,77 @@ module.exports = {
       Tutorial.create({
         title: req.param('title'),
         description: req.param('description'),
-        owner: { username: foundUser.username},
-        // videos: []
-      }).exec(function(err, createdTutorial){
+        owner: foundUser.id,
+      })
+      .exec(function(err, createdTutorial){
         if (err) return res.negotiate(err);
 
-        // Update the user to contain the new tutorial
-        foundUser.tutorials = [];
-        foundUser.tutorials.push({
-          title: req.param('title'),
-          description: req.param('description'),
-          created: foundUser.createdAt,
-          updated: foundUser.updatedAt,
-          id: foundUser.id
-        });
+        // return the new tutorial id
+        return res.json({id: createdTutorial.id});
+      });
+    });
+  },
 
-        User.update({id: req.session.userId})
-        .set({tutorials: foundUser.tutorials})
-        .exec(function(err){
-          if (err) return res.negotiate(err);
+  updateTutorial: function(req, res) {
 
-          // return the new tutorial id
-          return res.json({
-            id: createdTutorial.id
+    /*
+     __   __    _ _    _      _   _          
+     \ \ / /_ _| (_)__| |__ _| |_(_)___ _ _  
+      \ V / _` | | / _` / _` |  _| / _ \ ' \ 
+       \_/\__,_|_|_\__,_\__,_|\__|_\___/_||_|
+                                         
+    */
+
+    // Validate parameters
+    if (!_.isString(req.param('title'))) {
+      return res.badRequest();
+    }
+
+    if (!_.isString(req.param('description'))) {
+      return res.badRequest();
+    }
+
+    // Update the tutorial coercing the incoming id from a string to an integer using the unary `+` 
+    Tutorial.update({
+      id: +req.param('id')
+    }).set({
+      title: req.param('title'),
+      description: req.param('description')
+    }).exec(function (err) {
+      if (err) return res.negotiate(err);
+
+      // Propagate updates to embedded (i.e. cached) arrays of tutorials on our user records.
+      User.find().exec(function (err, users) {
+        if (err) { return res.negotiate(err); }
+
+        async.each(users, function (user, next){
+
+          // Try to find the tutorial using the provided `id` in the embedded tutorials array
+          var cachedTutorial = _.find(user.tutorials, { id: +req.param('id') });
+
+          // If this user does not have the tutorial that is being updated,
+          // move on to the next user.
+          if (!cachedTutorial) {
+            return next();
+          }
+
+          // Otherwise, this user has the cached version of our tutorial.
+          // So we'll change the `tutorials` array and save it back to the db.
+          cachedTutorial.title = req.param('title');
+          cachedTutorial.description = req.param('description');
+          
+          // Update the user with the updated parameters
+          User.update({
+            id: user.id
+          }).set({
+            tutorials: user.tutorials
+          }).exec(function (err) {
+            if (err) { return next(err); }
+            return next();
           });
+        }, function (err) {
+          if (err) {return res.negotiate(err);}
+          return res.ok();
         });
       });
     });
@@ -277,10 +325,6 @@ module.exports = {
     return res.ok();
   },
 
-  updateTutorial: function(req, res) {
-
-    return res.ok();
-  },
 
   updateVideo: function(req, res) {
 

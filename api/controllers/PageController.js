@@ -813,55 +813,60 @@ module.exports = {
       ]
     };
 
-    // If not logged in set `me` property to `null` and pass the tutorial to the view
-    if (!req.session.userId) {
-      return res.view('tutorials-detail', {
-        me: null,
-        stars: tutorial.stars,
-        tutorial: tutorial
+    Tutorial.findOne(req.param('id')).exec(function(err, tutorial){
+    if (err) return res.negotiate(err);
+    if (!tutorial) return res.notFound();
+
+      // If not logged in set `me` property to `null` and pass the tutorial to the view
+      if (!req.session.userId) {
+        return res.view('tutorials-detail', {
+          me: null,
+          stars: tutorial.stars,
+          tutorial: tutorial
+        });
+      }
+
+      User.findOne(req.session.userId, function(err, user) {
+        if (err) {
+          return res.negotiate(err);
+        }
+
+        if (!user) {
+          sails.log.verbose('Session refers to a user who no longer exists- did you delete a user, then try to refresh the page with an open tab logged-in as that user?');
+          return res.view('tutorials-detail', {
+            me: null
+          });
+        }
+
+        // We'll provide `me` as a local to the profile page view.
+        // (this is so we can render the logged-in navbar state, etc.)
+        var me = {
+          gravatarURL: user.gravatarURL,
+          username: user.username,
+          admin: user.admin
+        };
+
+        if (user.username === tutorial.owner) {
+          me.isMe = true;
+
+          return res.view('tutorials-detail', {
+            me: me,
+            stars: tutorial.stars,
+            tutorial: tutorial
+          });
+
+        } else {
+          return res.view('tutorials-detail', {
+            me: {
+              gravatarURL: user.gravatarURL,
+              username: user.username,
+              admin: user.admin
+            },
+            stars: tutorial.stars,
+            tutorial: tutorial
+          });
+        }
       });
-    }
-
-    User.findOne(req.session.userId, function(err, user) {
-      if (err) {
-        return res.negotiate(err);
-      }
-
-      if (!user) {
-        sails.log.verbose('Session refers to a user who no longer exists- did you delete a user, then try to refresh the page with an open tab logged-in as that user?');
-        return res.view('tutorials-detail', {
-          me: null
-        });
-      }
-
-      // We'll provide `me` as a local to the profile page view.
-      // (this is so we can render the logged-in navbar state, etc.)
-      var me = {
-        gravatarURL: user.gravatarURL,
-        username: user.username,
-        admin: user.admin
-      };
-
-      if (user.username === tutorial.owner) {
-        me.isMe = true;
-
-        return res.view('tutorials-detail', {
-          me: me,
-          stars: tutorial.stars,
-          tutorial: tutorial
-        });
-
-      } else {
-        return res.view('tutorials-detail', {
-          me: {
-            gravatarURL: user.gravatarURL,
-            username: user.username,
-            admin: user.admin
-          },
-          stars: tutorial.stars,
-          tutorial: tutorial
-        });
-      }
     });
   },
 
@@ -889,34 +894,38 @@ module.exports = {
 
   editTutorial: function(req, res) {
 
-    // Fake tutorials detail dictionary 
-    var tutorial = {
-      title: 'The best of Douglas Crockford on JavaScript.',
-      description: 'Understanding JavaScript the good parts, and more.',
-      id: 1
-    };
+    Tutorial.findOne({
+      id: +req.param('id')
+    }).exec(function (err, foundTutorial){
+      if (err) return res.negotiate(err);
+      if (!foundTutorial) return res.notFound();
 
-    User.findOne(req.session.userId, function(err, user) {
-      if (err) {
-        return res.negotiate(err);
-      }
+      User.findOne({
+        id: +req.session.userId
+      }).exec(function (err, foundUser) {
+        if (err) return res.negotiate(err);
 
-      if (!user) {
-        sails.log.verbose('Session refers to a user who no longer exists- did you delete a user, then try to refresh the page with an open tab logged-in as that user?');
-        return res.redirect('/tutorials');
-      }
-
-      return res.view('tutorials-detail-edit', {
-        me: {
-          gravatarURL: user.gravatarURL,
-          username: user.username,
-          admin: user.admin
-        },
-        tutorial: {
-          id: tutorial.id,
-          title: tutorial.title,
-          description: tutorial.description,
+        if (!foundUser) {
+          sails.log.verbose('Session refers to a user who no longer exists- did you delete a user, then try to refresh the page with an open tab logged-in as that user?');
+          return res.redirect('/tutorials');
         }
+
+        if (foundUser.username !== foundTutorial.owner.username) {
+          return res.redirect('/tutorials/'+foundTutorial.id);
+        }
+
+        return res.view('tutorials-detail-edit', {
+          me: {
+            gravatarURL: foundUser.gravatarURL,
+            username: foundUser.username,
+            admin: foundUser.admin
+          },
+          tutorial: {
+            id: foundTutorial.id,
+            title: foundTutorial.title,
+            description: foundTutorial.description,
+          }
+        });
       });
     });
   },
