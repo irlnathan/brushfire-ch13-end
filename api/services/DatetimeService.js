@@ -22,6 +22,16 @@ module.exports = {
     return niceTimeAgoString;
   },
 
+  /**
+   * Transform total seconds into hoursMinutesSeconds format 
+   * as well as hours, minutes, seconds.
+   * 
+   * @required {Integer} totalSeconds   e.g. 543323
+   * 
+   * @return {String}         e.g. "1h 2m 3s"
+   * @return {Integer}        e.g. 1
+   */
+
   getHoursMinutesSeconds: function(options) {
     
     var hours = Math.floor(options.totalSeconds/ 60 / 60);

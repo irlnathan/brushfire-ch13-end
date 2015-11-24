@@ -752,9 +752,10 @@ module.exports = {
   tutorialDetail: function(req, res) {
 
     Tutorial.findOne({
-      id: req.param('id')
+      id: +req.param('id')
     })
     .populate('owner')
+    .populate('ratings')
     .exec(function (err, foundTutorial){
     if (err) return res.negotiate(err);
     if (!foundTutorial) return res.notFound();
@@ -766,75 +767,122 @@ module.exports = {
         if (err) return res.negotiate(err);
         if (!foundUser) return res.notFound();
 
-        /*
-          _____                     __                      
-         |_   _| __ __ _ _ __  ___ / _| ___  _ __ _ __ ___  
-           | || '__/ _` | '_ \/ __| |_ / _ \| '__| '_ ` _ \ 
-           | || | | (_| | | | \__ \  _| (_) | |  | | | | | |
-           |_||_|  \__,_|_| |_|___/_|  \___/|_|  |_| |_| |_|
-                                                  
-         */
+        // Find the rating (if any) of the currently authenticated user
+        Rating.findOne({
+          byUser: req.session.userId
+        }).exec(function(err, foundRating){
+          if (err) return res.negotiate(err);
 
-        // Set the tutorial.owner attribute to the username of the creator of the tutorial
-        foundTutorial.owner = foundUser.username;
+          /*
+            _____                     __                      
+           |_   _| __ __ _ _ __  ___ / _| ___  _ __ _ __ ___  
+             | || '__/ _` | '_ \/ __| |_ / _ \| '__| '_ ` _ \ 
+             | || | | (_| | | | \__ \  _| (_) | |  | | | | | |
+             |_||_|  \__,_|_| |_|___/_|  \___/|_|  |_| |_| |_|
+                                                    
+           */
 
-        // Format the date to the time ago format
-        // Require the datetime machinepack
-        var Datetime = require('machinepack-datetime');
+          // Set the tutorial.owner attribute to the username of the creator of the tutorial
+          foundTutorial.owner = foundUser.username;
 
-        // Assign the time ago formatted date using `.getTimeAgo`
-        foundTutorial.created = DatetimeService.getTimeAgo({date: foundTutorial.createdAt});
-        foundTutorial.updated = DatetimeService.getTimeAgo({date: foundTutorial.updatedAt});
-  
-        // If not logged in set `me` property to `null` and pass the tutorial to the view
-        if (!req.session.userId) {
-          return res.view('tutorials-detail', {
-            me: null,
-            stars: foundTutorial.stars,
-            tutorial: foundTutorial
-          });
-        }
+          /**********************************************************************************
+            Date Formatting
+          **********************************************************************************/
 
-        User.findOne(req.session.userId, function(err, loggedInUser) {
-          if (err) {
-            return res.negotiate(err);
-          }
+          // Assign the time ago formatted date using `.getTimeAgo`
+          foundTutorial.created = DatetimeService.getTimeAgo({date: foundTutorial.createdAt});
+          foundTutorial.updated = DatetimeService.getTimeAgo({date: foundTutorial.updatedAt});
 
-          if (!loggedInUser) {
-            sails.log.verbose('Session refers to a user who no longer exists- did you delete a user, then try to refresh the page with an open tab logged-in as that user?');
-            return res.view('tutorials-detail', {
-              me: null
-            });
-          }
+          /**********************************************************************************
+            Rating the Tutorial
+          **********************************************************************************/
 
-          // We'll provide `me` as a local to the profile page view.
-          // (this is so we can render the logged-in navbar state, etc.)
-          var me = {
-            gravatarURL: loggedInUser.gravatarURL,
-            username: loggedInUser.username,
-            admin: loggedInUser.admin
-          };
-
-          if (loggedInUser.username === foundTutorial.owner) {
-            me.isMe = true;
-
-            return res.view('tutorials-detail', {
-              me: me,
-              stars: foundTutorial.stars,
-              tutorial: foundTutorial
-            });
-
+          // If a rating exists by the currently authenticated user update foundTutorial.myRating
+          if (!foundRating) {
+            foundTutorial.myRating = null;
           } else {
+            foundTutorial.myRating = foundRating.stars;
+          }
+
+          // Calculate the average of all existing ratings.
+          if (foundTutorial.ratings.length === 0) {
+            foundTutorial.averageRating = null;
+          } else {
+
+            // Assign the average to foundTutorial.averageRating
+            foundTutorial.averageRating = MathService.calculateAverage({ratings: foundTutorial.ratings})
+          }
+
+          /*
+            _                               _    ___        _   
+           | |    ___   __ _  __ _  ___  __| |  / _ \ _   _| |_ 
+           | |   / _ \ / _` |/ _` |/ _ \/ _` | | | | | | | | __|
+           | |__| (_) | (_| | (_| |  __/ (_| | | |_| | |_| | |_ 
+           |_____\___/ \__, |\__, |\___|\__,_|  \___/ \__,_|\__|
+                       |___/ |___/                              
+           */
+    
+          // If not logged in set `me` property to `null` and pass the tutorial to the view
+          if (!req.session.userId) {
+             console.log('foundTutorial: ', foundTutorial);
             return res.view('tutorials-detail', {
-              me: {
-                gravatarURL: loggedInUser.gravatarURL,
-                username: loggedInUser.username,
-                admin: loggedInUser.admin
-              },
-              stars: foundTutorial.stars,
+              me: null,
+              // stars: foundTutorial.stars,
               tutorial: foundTutorial
             });
           }
+
+          /*
+            _                               _   ___       
+           | |    ___   __ _  __ _  ___  __| | |_ _|_ __  
+           | |   / _ \ / _` |/ _` |/ _ \/ _` |  | || '_ \ 
+           | |__| (_) | (_| | (_| |  __/ (_| |  | || | | |
+           |_____\___/ \__, |\__, |\___|\__,_| |___|_| |_|
+                       |___/ |___/                        
+           */
+
+          User.findOne({
+            id: req.session.userId
+          })
+          .exec(function (err, loggedInUser) {
+            if (err) {
+              return res.negotiate(err);
+            }
+
+            if (!loggedInUser) {
+              sails.log.verbose('Session refers to a user who no longer exists- did you delete a user, then try to refresh the page with an open tab logged-in as that user?');
+              return res.view('tutorials-detail', {
+                me: null
+              });
+            }
+
+            // We'll provide `me` as a local to the profile page view.
+            // (this is so we can render the logged-in navbar state, etc.)
+            var me = {
+              gravatarURL: loggedInUser.gravatarURL,
+              username: loggedInUser.username,
+              admin: loggedInUser.admin
+            };
+
+            if (loggedInUser.username === foundTutorial.owner) {
+              me.isMe = true;
+
+              return res.view('tutorials-detail', {
+                me: me,
+                tutorial: foundTutorial
+              });
+
+            } else {
+              return res.view('tutorials-detail', {
+                me: {
+                  gravatarURL: loggedInUser.gravatarURL,
+                  username: loggedInUser.username,
+                  admin: loggedInUser.admin
+                },
+                tutorial: foundTutorial
+              });
+            }
+          });
         });
       });
     });

@@ -52,10 +52,6 @@ module.exports = {
       ratings: [
         {
           stars: 3,
-          user: 'sails-in-action'
-        },
-        {
-          stars: 1,
           user: 'frank-sinatra'
         }
       ]

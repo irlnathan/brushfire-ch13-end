@@ -25,6 +25,10 @@ module.exports = {
     //   type: 'json'
     // },
 
+    ratings: {
+      collection: 'rating',
+      via: 'byTutorial'
+    },
      
     // An array of video ids representing the manual (human) ordering of videos. 
     videoOrder: {
@@ -39,11 +43,6 @@ module.exports = {
     videos: {
       collection: 'video',
       via: 'tutorialAssoc'
-    },
-
-    ratings: {
-      collection: 'rating',
-      via: 'tutorial'
     }
   }
 };
