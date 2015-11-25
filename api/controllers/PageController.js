@@ -756,6 +756,7 @@ module.exports = {
     })
     .populate('owner')
     .populate('ratings')
+    .populate('videos')
     .exec(function (err, foundTutorial){
     if (err) return res.negotiate(err);
     if (!foundTutorial) return res.notFound();
@@ -950,44 +951,92 @@ module.exports = {
 
   newVideo: function(req, res) {
 
-    var tutorial = {
-      title: 'The best of Douglas Crockford on JavaScript.',
-      description: 'Understanding JavaScript the good parts, and more.',
-      owner: 'sails-in-action',
-      id: 1,
-      created: 'a month ago',
-      totalTime: '3h 22m 23s',
-      stars: 3
-    };
+    // Find the tutorial that will contain the added video
+    Tutorial.findOne({
+      id: +req.param('id')
+    })
+    .populate('owner')
+    .populate('ratings')
+    .populate('videos')
+    .exec(function (err, foundTutorial){
+      if (err) return res.negotiate(err);
+      if (!foundTutorial) return res.notFound();
 
-    User.findOne(req.session.userId, function(err, user) {
-      if (err) {
-        return res.negotiate(err);
-      }
-
-      if (!user) {
-        sails.log.verbose('Session refers to a user who no longer exists- did you delete a user, then try to refresh the page with an open tab logged-in as that user?');
-        return res.redirect('/');
-      }
-
-      return res.view('tutorials-detail-video-new', {
-        me: {
-          username: user.username,
-          gravatarURL: user.gravatarURL,
-          admin: user.admin
-        },
-        // We don't need all of the tutorial attributes on window.SAILS_LOCALS.tutorial
-        // so we're passing stars separately.
-        stars: tutorial.stars,
-        tutorial: {
-          id: tutorial.id,
-          title: tutorial.title,
-          description: tutorial.description,
-          owner: tutorial.owner,
-          created: tutorial.created,
-          totalTime: tutorial.totalTime,
-          stars: tutorial.stars
+      // Find the currently authenticated user
+      User.findOne({
+        id: req.session.userId
+      }).exec(function (err, user) {
+        if (err) {
+          return res.negotiate(err);
         }
+
+        if (!user) {
+          sails.log.verbose('Session refers to a user who no longer exists.');
+          return res.redirect('/');
+        }
+
+        // TODO: Probably should be a policy
+        if (user.username !== foundTutorial.owner.username) {
+
+          return res.redirect('/tutorials/'+foundTutorial.id);
+        }
+
+        /*
+            _____                     __                      
+           |_   _| __ __ _ _ __  ___ / _| ___  _ __ _ __ ___  
+             | || '__/ _` | '_ \/ __| |_ / _ \| '__| '_ ` _ \ 
+             | || | | (_| | | | \__ \  _| (_) | |  | | | | | |
+             |_||_|  \__,_|_| |_|___/_|  \___/|_|  |_| |_| |_|
+                                                    
+        */
+
+        // Transform the `created` attribute into time ago format
+        foundTutorial.created = DatetimeService.getTimeAgo({date: foundTutorial.createdAt});
+
+        /**********************************************************************************
+            Calculate the averge rating 
+        **********************************************************************************/
+
+        // Calculate the average of all existing ratings.
+        if (foundTutorial.ratings.length === 0) {
+          foundTutorial.averageRating = null;
+        } else {
+
+          // Assign the average to foundTutorial.averageRating
+          foundTutorial.stars = MathService.calculateAverage({ratings: foundTutorial.ratings});
+        }
+
+        /************************************
+          Tutorial & Video Length Formatting
+        *************************************/
+
+        // Format the total time for each video and for the tutorial as a whole.
+        var totalSeconds = 0;
+        _.each(foundTutorial.videos, function(video){
+
+          // Total the number of seconds for all videos for tutorial total time
+          totalSeconds = totalSeconds + video.lengthInSeconds;
+
+          // Format the total time for the tutorial
+          foundTutorial.totalTime = DatetimeService.getHoursMinutesSeconds({totalSeconds: totalSeconds}).hoursMinutesSeconds;
+        });
+
+        return res.view('tutorials-detail-video-new', {
+          me: {
+            username: user.username,
+            gravatarURL: user.gravatarURL,
+            admin: user.admin
+          },
+          tutorial: {
+            id: foundTutorial.id,
+            title: foundTutorial.title,
+            description: foundTutorial.description,
+            owner: foundTutorial.owner.username,
+            created: foundTutorial.created,
+            totalTime: foundTutorial.totalTime,
+            stars: foundTutorial.stars
+          }
+        });
       });
     });
   },

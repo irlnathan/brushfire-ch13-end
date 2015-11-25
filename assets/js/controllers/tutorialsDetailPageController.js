@@ -16,7 +16,7 @@ angular.module('brushfire').controller('tutorialsDetailPageController', ['$scope
   // Get the tutorial id form the current URL path:  /tutorials/1
   $scope.fromUrlTutorialId = window.location.pathname.split('/')[2];
 
-  // Grab the number of stars (in a local) for this tutorial from the stars
+  // Grab the tutorial (in a local) from the tutorial
   // property of the window object
   $scope.tutorial = window.SAILS_LOCALS.tutorial;
 

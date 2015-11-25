@@ -24,10 +24,9 @@ angular.module('brushfire').controller('tutorialsDetailVideoNewPageController', 
 
   $scope.me = window.SAILS_LOCALS.me;
 
-  // Get the tutorials number of stars
-  $scope.tutorial = {
-    stars: window.SAILS_LOCALS.stars
-  };
+  // Grab the tutorial (in a local) from the tutorial
+  // property of the window object
+  $scope.tutorial = window.SAILS_LOCALS.tutorial;
 
   // We need a max for the stars (i.e. 1 out of 5 stars)
   $scope.max = 5;
