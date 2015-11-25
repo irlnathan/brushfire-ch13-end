@@ -361,52 +361,88 @@ module.exports = {
     }).exec(function (err) {
       if (err) return res.negotiate(err);
 
-      // Propagate updates to embedded (i.e. cached) arrays of tutorials on our user records.
-      User.find().exec(function (err, users) {
-        if (err) { return res.negotiate(err); }
-
-        async.each(users, function (user, next){
-
-          // Try to find the tutorial using the provided `id` in the embedded tutorials array
-          var cachedTutorial = _.find(user.tutorials, { id: +req.param('id') });
-
-          // If this user does not have the tutorial that is being updated,
-          // move on to the next user.
-          if (!cachedTutorial) {
-            return next();
-          }
-
-          // Otherwise, this user has the cached version of our tutorial.
-          // So we'll change the `tutorials` array and save it back to the db.
-          cachedTutorial.title = req.param('title');
-          cachedTutorial.description = req.param('description');
-          
-          // Update the user with the updated parameters
-          User.update({
-            id: user.id
-          }).set({
-            tutorials: user.tutorials
-          }).exec(function (err) {
-            if (err) { return next(err); }
-            return next();
-          });
-        }, function (err) {
-          if (err) {return res.negotiate(err);}
-          return res.ok();
-        });
-      });
+      return res.ok();
     });
   },
 
   addVideo: function(req, res) {
 
-    return res.ok();
+    /*
+     __   __    _ _    _      _   _          
+     \ \ / /_ _| (_)__| |__ _| |_(_)___ _ _  
+      \ V / _` | | / _` / _` |  _| / _ \ ' \ 
+       \_/\__,_|_|_\__,_\__,_|\__|_\___/_||_|
+                                         
+    */
+   
+    if (!_.isNumber(req.param('hours')) || !_.isNumber(req.param('minutes')) || !_.isNumber(req.param('seconds'))) {
+      return res.badRequest();
+    }
+    if (!_.isString(req.param('src')) || !_.isString(req.param('title'))) {
+      return res.badRequest();
+    }
+
+    // Look up the tutorial record.
+    Tutorial.findOne({
+      id: +req.param('tutorialId')
+    }).exec(function (err, foundTutorial){
+      if (err) return res.negotiate(err);
+      if (!foundTutorial) return res.notFound();
+
+      // Create the video record.
+      Video.create({
+        tutorialAssoc: foundTutorial.id,
+        title: req.param('title'),
+        src: req.param('src'),
+        lengthInSeconds: req.param('hours') * 60 * 60 + req.param('minutes') * 60 + req.param('seconds')
+      }).exec(function (err, createdVideo) {
+        if (err) return res.negotiate(err);
+
+        return res.ok();
+      });
+    });
   },
 
 
   updateVideo: function(req, res) {
 
-    return res.ok();
+    /*
+     __   __    _ _    _      _   _          
+     \ \ / /_ _| (_)__| |__ _| |_(_)___ _ _  
+      \ V / _` | | / _` / _` |  _| / _ \ ' \ 
+       \_/\__,_|_|_\__,_\__,_|\__|_\___/_||_|
+                                         
+    */
+
+    if (!_.isString(req.param('title'))) {
+      return res.badRequest();
+    }
+
+    if (!_.isString(req.param('src'))) {
+      return res.badRequest();
+    }
+   
+    // Coerce the hours, minutes, seconds parameter to integers
+    var hours = +req.param('hours');
+    var minutes = +req.param('minutes');
+    var seconds = +req.param('seconds');
+
+    // Calculate the total seconds of the video and store that value as lengthInSeconds
+    var convertedToSeconds = hours * 60 * 60 + minutes * 60 + seconds;
+
+    // Update the video 
+    Video.update({
+      id: +req.param('id')
+    }).set({
+      title: req.param('title'),
+      src: req.param('src'),
+      lengthInSeconds: convertedToSeconds
+    }).exec(function (err, updatedUser){
+      if (err) return res.negotiate(err);
+      if (!updatedUser) return res.notFound();
+
+      return res.ok();
+    });
   },
 
   deleteTutorial: function(req, res) {
