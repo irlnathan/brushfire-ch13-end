@@ -7,21 +7,83 @@
 
 module.exports = {
 
-
   reorderVideoUp: function(req, res) {
 
-  console.log('sort video up: ', req.param('id'));
 
-  return res.ok();
+    // Look up the video with the specified id
+    // (and populate the tutorial it belongs to)
+    Video.findOne({
+      id: +req.param('id')
+    })
+    .populate('tutorialAssoc') // consider renaming this association to `partOfTutorial`
+    .exec(function (err, foundVideo){
+      if (err) return res.negotiate(err);
+      if (!foundVideo) return res.notFound();
+      
+      // Modify the tutorial's `videoOrder` to move the video with the
+      // specified id up in the list.
 
+      // Find the index of the video id within the array.
+      var indexOfVideo = _.indexOf(foundVideo.tutorialAssoc.videoOrder, +req.param('id'));
+
+      // If this is already the first video in the list, consider this a bad request.
+      // (this should have been prevented on the front-end already, but we're just being safe)
+      if (indexOfVideo === 0) {
+        return res.badRequest('This video is already at the top of the list.');
+      }
+
+      // Remove the video id from its current position in the array
+      foundVideo.tutorialAssoc.videoOrder.splice(indexOfVideo, 1);
+
+      // Insert the video id at the new position within the array
+      foundVideo.tutorialAssoc.videoOrder.splice(indexOfVideo-1, 0, +req.param('id'));
+
+      // Persist the tutorial record back to the database.
+      foundVideo.tutorialAssoc.save(function (err) {
+        if (err) return res.negotiate(err);
+        return res.ok();
+      });
+    });
   },
 
   reorderVideoDown: function(req, res) {
 
-    console.log('sort video down: ', req.param('id'));
+    // Look up the video with the specified id
+    // (and populate the tutorial it belongs to)
+    Video.findOne({
+      id: +req.param('id')
+    })
+    .populate('tutorialAssoc') // consider renaming this association to `partOfTutorial`
+    .exec(function (err, foundVideo){
+      if (err) return res.negotiate(err);
+      if (!foundVideo) return res.notFound();
 
-    return res.ok();
+      // Modify the tutorial's `videoOrder` to move the video with the
+      // specified id up in the list.
 
+      // Find the index of the video id within the array.
+      var indexOfVideo = _.indexOf(foundVideo.tutorialAssoc.videoOrder, +req.param('id'));
+
+      var numberOfTutorials = foundVideo.tutorialAssoc.videoOrder.length;
+
+      // If this is already the last video in the list, consider this a bad request.
+      // (this should have been prevented on the front-end already, but we're just being safe)
+      if (indexOfVideo === numberOfTutorials) {
+        return res.badRequest('This video is already at the bottom of the list.');
+      }
+
+      // Remove the video id from its current position in the array
+      foundVideo.tutorialAssoc.videoOrder.splice(indexOfVideo, 1);
+
+      // Insert the video id at the new position within the array
+      foundVideo.tutorialAssoc.videoOrder.splice(indexOfVideo+1, 0, +req.param('id'));
+
+      // Persist the tutorial record back to the database.
+      foundVideo.tutorialAssoc.save(function (err) {
+        if (err) return res.negotiate(err);
+        return res.ok();
+      });
+    });
   }
 };
 

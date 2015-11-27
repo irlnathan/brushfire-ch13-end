@@ -323,6 +323,7 @@ module.exports = {
         title: req.param('title'),
         description: req.param('description'),
         owner: foundUser.id,
+        videoOrder: [],
       })
       .exec(function(err, createdTutorial){
         if (err) return res.negotiate(err);
@@ -398,7 +399,15 @@ module.exports = {
       }).exec(function (err, createdVideo) {
         if (err) return res.negotiate(err);
 
-        return res.ok();
+        // Modify the `videoOrder` array embedded in our tutorial to reflect the new video.
+        // (We always add new videos to the bottom of the list)
+        foundTutorial.videoOrder.push(createdVideo.id);
+
+        foundTutorial.save(function (err){
+          if (err) return res.negotiate(err);
+
+          return res.ok();
+        });
       });
     });
   },
