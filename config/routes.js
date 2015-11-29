@@ -34,6 +34,7 @@ module.exports.routes = {
   'PUT /tutorials/:id': 'TutorialController.updateTutorial',
   'PUT /tutorials/:id/rate': 'TutorialController.rateTutorial',
 
+  'POST /videos/:id/chat': 'VideoController.chat',
   
   'DELETE /tutorials/:id': 'TutorialController.deleteTutorial',
   'DELETE /videos/:id': 'TutorialController.removeVideo',
@@ -66,7 +67,7 @@ module.exports.routes = {
   'GET /tutorials/:id/edit': 'PageController.editTutorial',
   'GET /tutorials/:id/videos/new': 'PageController.newVideo',
   'GET /tutorials/:tutorialId/videos/:id/edit': 'PageController.editVideo',
-  'GET /tutorials/:tutorialId/videos/:id/show': 'TutorialController.showVideo',
+  'GET /tutorials/:tutorialId/videos/:id/show': 'PageController.showVideo',
 
   'GET /:username/followers': 'PageController.profileFollower',
   'GET /:username/following': 'PageController.profileFollowing',
