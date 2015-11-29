@@ -492,14 +492,14 @@ module.exports = {
     })
     .populate('followers')
     .populate('following')
-    .exec(function (err, user){
+    .exec(function (err, foundUser){
       if (err) return res.negotiate(err);
-      if (!user) return res.notFound();
+      if (!foundUser) return res.notFound();
 
       // Add the currently authenticated user-agent (user) as 
       // a follower of owner of the tutorial
-      user.followers.add(req.session.userId);
-      user.save(function(err, updatedUser){
+      foundUser.followers.add(req.session.userId);
+      foundUser.save(function (err, updatedUser){
         if (err) return res.negotiate(err);
         if (!updatedUser) return res.notFound();
 
@@ -521,14 +521,14 @@ module.exports = {
     })
     .populate('followers')
     .populate('following')
-    .exec(function (err, user){
+    .exec(function (err, foundUser){
       if (err) return res.negotiate(err);
-      if (!user) return res.notFound();
+      if (!foundUser) return res.notFound();
 
       // Remove the currently authenticated user-agent (user) as 
       // a follower of owner of the tutorial
-      user.followers.remove(req.session.userId);
-      user.save(function(err, updatedUser){
+      foundUser.followers.remove(req.session.userId);
+      foundUser.save(function(err, updatedUser){
         if (err) return res.negotiate(err);
         if (!updatedUser) return res.notFound();
         

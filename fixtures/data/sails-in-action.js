@@ -75,6 +75,12 @@ module.exports = {
           src: 'https://www.youtube.com/embed/fBeuaDOBk3s',
           lengthInSeconds: 2817
         }
+      ],
+      ratings: [
+        {
+          stars: 4,
+          user: 'frank-sinatra'
+        }
       ]
     },
     {
@@ -90,6 +96,12 @@ module.exports = {
           title: 'Mitosis: Mitosis: The Phases, Part 2 of 2 from Thinkwell Biology',
           src: 'https://www.youtube.com/embed/KRKFMbBizos',
           lengthInSeconds: 434
+        }
+      ],
+      ratings: [
+        {
+          stars: 5,
+          user: 'frank-sinatra'
         }
       ]
     },
@@ -107,6 +119,12 @@ module.exports = {
           src: 'https://www.youtube.com/embed/c77--cCHPyU',
           lengthInSeconds: 523
         }
+      ],
+      ratings: [
+        {
+          stars: 2,
+          user: 'frank-sinatra'
+        }
       ]
     },
     {
@@ -123,6 +141,12 @@ module.exports = {
           src: 'https://www.youtube.com/embed/M6hlLtpXSZg',
           lengthInSeconds: 578
         }
+      ],
+      ratings: [
+        {
+          stars: 3,
+          user: 'frank-sinatra'
+        }
       ]
     },
     {
@@ -133,6 +157,12 @@ module.exports = {
           title: 'Character Development Tips for Fiction Writers (Part 1)',
           src: 'https://www.youtube.com/embed/6YnPhR2xg_c',
           lengthInSeconds: 360
+        }
+      ],
+      ratings: [
+        {
+          stars: 5,
+          user: 'frank-sinatra'
         }
       ]
     },
@@ -145,6 +175,12 @@ module.exports = {
           src: 'https://www.youtube.com/embed/uCdUAvTQF2Q',
           lengthInSeconds: 301
         }
+      ],
+      ratings: [
+        {
+          stars: 4,
+          user: 'frank-sinatra'
+        }
       ]
     },
     {
@@ -155,6 +191,12 @@ module.exports = {
           title: 'Single Malt Whiskey (for the home distiller) episode #1.mov',
           src: 'https://www.youtube.com/embed/xptvVFoZ_pE',
           lengthInSeconds: 834
+        }
+      ],
+      ratings: [
+        {
+          stars: 2,
+          user: 'frank-sinatra'
         }
       ]
     },
@@ -167,6 +209,12 @@ module.exports = {
           src: 'https://www.youtube.com/embed/LzFIPUJghsQ',
           lengthInSeconds: 270
         }
+      ],
+      ratings: [
+        {
+          stars: 5,
+          user: 'frank-sinatra'
+        }
       ]
     },
     {
@@ -177,6 +225,12 @@ module.exports = {
           title: '5 Weird Ways To Start A Fire',
           src: 'https://www.youtube.com/embed/c-vUeAXjQTw',
           lengthInSeconds: 891
+        }
+      ],
+      ratings: [
+        {
+          stars: 4,
+          user: 'frank-sinatra'
         }
       ]
     },
