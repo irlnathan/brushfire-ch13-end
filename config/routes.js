@@ -34,10 +34,6 @@ module.exports.routes = {
   'PUT /tutorials/:id': 'TutorialController.updateTutorial',
   'PUT /tutorials/:id/rate': 'TutorialController.rateTutorial',
 
-
-  
-  // 'GET /tutorials/:id/my-rating': 'TutorialController.myRating',
-  'GET /tutorials/:id/average-rating': 'TutorialController.averageRating',
   
   'DELETE /tutorials/:id': 'TutorialController.deleteTutorial',
   'DELETE /videos/:id': 'TutorialController.removeVideo',
@@ -51,33 +47,6 @@ module.exports.routes = {
   *************************************************************/
   
   'GET /profile/followers': 'PageController.profileFollower',
-
-  // 'GET /profile/followers': {
-  //   view: 'profile-followers',
-  //   locals: {
-  //     gravatarURL: 'http://www.gravatar.com/avatar/205e460b479e2e5b48aec07710c08d50',
-  //     me: {
-  //       username: 'yaya',
-  //       email: 'yaya@ya.com',
-  //       isMe: true
-  //     },
-  //     user: {
-  //       followers: [{
-  //         name: 'sails-in-action'
-  //       },{
-  //         name: 'sails-in-action'
-  //       },{
-  //         name: 'sails-in-action'
-  //       },{
-  //         name: 'sails-in-action'
-  //       },{
-  //         name: 'sails-in-action'
-  //       },{
-  //         name: 'sails-in-action'
-  //       }]
-  //     }
-  //   }
-  // },
 
   'GET /': 'PageController.home',
   'GET /profile/edit': 'PageController.editProfile',
@@ -102,10 +71,4 @@ module.exports.routes = {
   'GET /:username/followers': 'PageController.profileFollower',
   'GET /:username/following': 'PageController.profileFollowing',
   'GET /:username': 'PageController.profile',
-  
-  // 'GET /:username': {
-  //   controller: 'PageController',
-  //   action: 'profile',
-  //   skipAssets: true
-  // },
 };
