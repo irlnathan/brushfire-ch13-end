@@ -889,6 +889,7 @@ module.exports = {
           return res.redirect('/');
         }
 
+        // Assure the user is the owner of the tutorial
         if (foundUser.username !== foundTutorial.owner.username) {
 
           return res.redirect('/tutorials/'+foundTutorial.id);
@@ -1056,12 +1057,6 @@ module.exports = {
 
         if (!foundUser) {
           sails.log.verbose('Session refers to a user who no longer exists- did you delete a user, then try to refresh the page with an open tab logged-in as that user?');
-          return res.view('show-video', {
-            me: null,
-            video: foundVideo,
-            tutorialId: req.param('tutorialId'),
-            chat: FAKE_CHAT
-          });
         }
 
         return res.view('show-video', {

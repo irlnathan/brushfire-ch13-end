@@ -9,7 +9,6 @@ module.exports = {
 
   reorderVideoUp: function(req, res) {
 
-
     // Look up the video with the specified id
     // (and populate the tutorial it belongs to)
     Video.findOne({
@@ -19,6 +18,12 @@ module.exports = {
     .exec(function (err, foundVideo){
       if (err) return res.negotiate(err);
       if (!foundVideo) return res.notFound();
+
+      // Assure that the owner of the tutorial cannot rate their own tutorial.
+      // Note that this is a back-up to the front-end which already prevents the UI from being displayed. 
+      if (req.session.userId !== foundVideo.tutorialAssoc.owner) {
+        return res.forbidden();
+      }
       
       // Modify the tutorial's `videoOrder` to move the video with the
       // specified id up in the list.
@@ -57,6 +62,12 @@ module.exports = {
     .exec(function (err, foundVideo){
       if (err) return res.negotiate(err);
       if (!foundVideo) return res.notFound();
+
+      // Assure that the owner of the tutorial cannot rate their own tutorial.
+      // Note that this is a back-up to the front-end which already prevents the UI from being displayed. 
+      if (req.session.userId !== foundVideo.tutorialAssoc.owner) {
+        return res.forbidden();
+      }
 
       // Modify the tutorial's `videoOrder` to move the video with the
       // specified id up in the list.

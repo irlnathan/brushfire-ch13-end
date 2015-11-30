@@ -496,6 +496,12 @@ module.exports = {
       if (err) return res.negotiate(err);
       if (!foundUser) return res.notFound();
 
+      // Assure that a user cannot follow themselves.  This is a secondary
+      // check to the front end which we can't trust.
+      if (foundUser.id === req.session.userId) {
+        return res.forbidden();
+      }
+
       // Add the currently authenticated user-agent (user) as 
       // a follower of owner of the tutorial
       foundUser.followers.add(req.session.userId);
@@ -524,6 +530,12 @@ module.exports = {
     .exec(function (err, foundUser){
       if (err) return res.negotiate(err);
       if (!foundUser) return res.notFound();
+
+      // Assure that a user cannot follow themselves.  This is a secondary
+      // check to the front end which we can't trust.
+      if (foundUser.id === req.session.userId) {
+        return res.forbidden();
+      }
 
       // Remove the currently authenticated user-agent (user) as 
       // a follower of owner of the tutorial
