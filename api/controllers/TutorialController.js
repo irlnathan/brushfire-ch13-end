@@ -145,9 +145,16 @@ module.exports = {
       Tutorial.findOne({
         id: +req.param('id')
       })
+      .populate('owner')
       .exec(function(err, foundTutorial){
         if (err) return res.negotiate(err);
         if (!foundTutorial) return res.notFound();
+
+        // Assure that the owner of the tutorial cannot rate their own tutorial.
+        // Note that this is a back-up to the front-end which already prevents the UI from being displayed. 
+        if (currentUser.id === foundTutorial.owner.id) {
+          return res.forbidden();
+        }
 
         // Find the rating, if any, of the tutorial from the currently logged in user.
         Rating.findOne({
@@ -281,16 +288,38 @@ module.exports = {
       return res.badRequest();
     }
 
-    // Update the tutorial coercing the incoming id from a string to an integer using the unary `+` 
-    Tutorial.update({
-      id: +req.param('id')
-    }).set({
-      title: req.param('title'),
-      description: req.param('description')
-    }).exec(function (err) {
+    // Find the currently logged in user and her tutorials
+    User.findOne({
+      id: req.session.userId
+    }).exec(function (err, foundUser){
       if (err) return res.negotiate(err);
+      if (!foundUser) return res.notFound();
 
-      return res.ok();
+      Tutorial.findOne({
+        id: +req.param('id')
+      })
+      .populate('owner')
+      .exec(function(err, foundTutorial){
+        if (err) return res.negotiate(err);
+        if (!foundTutorial) return res.notFound();
+
+        // Check ownership
+        if (foundUser.id != foundTutorial.owner.id) {
+          return res.forbidden();
+        }
+
+        // Update the tutorial coercing the incoming id from a string to an integer using the unary `+` 
+        Tutorial.update({
+          id: +req.param('id')
+        }).set({
+          title: req.param('title'),
+          description: req.param('description')
+        }).exec(function (err) {
+          if (err) return res.negotiate(err);
+
+          return res.ok();
+        });
+      });
     });
   },
 
@@ -314,9 +343,16 @@ module.exports = {
     // Look up the tutorial record.
     Tutorial.findOne({
       id: +req.param('tutorialId')
-    }).exec(function (err, foundTutorial){
+    })
+    .populate('owner')
+    .exec(function (err, foundTutorial){
       if (err) return res.negotiate(err);
       if (!foundTutorial) return res.notFound();
+
+      // Assure that the owner is the current user
+      if (foundTutorial.owner.id !== req.session.userId) {
+        return res.forbidden();
+      }
 
       // Create the video record.
       Video.create({
@@ -358,6 +394,10 @@ module.exports = {
     if (!_.isString(req.param('src'))) {
       return res.badRequest();
     }
+
+    if (!_.isNumber(req.param('hours')) || !_.isNumber(req.param('minutes')) || !_.isNumber(req.param('seconds'))) {
+      return res.badRequest();
+    }
    
     // Coerce the hours, minutes, seconds parameter to integers
     var hours = +req.param('hours');
@@ -367,18 +407,32 @@ module.exports = {
     // Calculate the total seconds of the video and store that value as lengthInSeconds
     var convertedToSeconds = hours * 60 * 60 + minutes * 60 + seconds;
 
-    // Update the video 
-    Video.update({
+    Video.findOne({
       id: +req.param('id')
-    }).set({
-      title: req.param('title'),
-      src: req.param('src'),
-      lengthInSeconds: convertedToSeconds
-    }).exec(function (err, updatedUser){
-      if (err) return res.negotiate(err);
-      if (!updatedUser) return res.notFound();
+    })
+    .populate('tutorialAssoc')
+    .exec(function (err, foundVideo){
+      if (err) return res.negotiate (err);
+      if (!foundVideo) return res.notFound();
 
-      return res.ok();
+      // Assure that the currently logged in user is the owner of the tutorial
+      if (req.session.userId !== foundVideo.tutorialAssoc.owner) {
+        return res.forbidden();
+      }
+
+      // Update the video 
+      Video.update({
+        id: +req.param('id')
+      }).set({
+        title: req.param('title'),
+        src: req.param('src'),
+        lengthInSeconds: convertedToSeconds
+      }).exec(function (err, updatedUser){
+        if (err) return res.negotiate(err);
+        if (!updatedUser) return res.notFound();
+
+        return res.ok();
+      });
     });
   },
 
@@ -400,6 +454,11 @@ module.exports = {
       .exec(function(err, foundTutorial){
         if (err) return res.negotiate(err);
         if (!foundTutorial) return res.notFound();
+
+        // Check ownership
+        if (foundUser.id != foundTutorial.owner.id) {
+          return res.forbidden();
+        }
         
         // Destroy the tutorial
         Tutorial.destroy({
@@ -436,6 +495,11 @@ module.exports = {
     .exec(function (err, foundTutorial){
       if (err) return res.negotiate(err);
       if (!foundTutorial) return res.notFound();
+
+      // Check ownership
+      if (req.session.userId !== foundTutorial.owner) {
+        return res.forbidden();
+      }
 
       // Remove the reference to this video from our tutorial record.
       foundTutorial.videos.remove(+req.param('id'));

@@ -21,16 +21,16 @@ module.exports.policies = {
 
   PageController: {
     home: [],
-    logout: [],
+    logout: ['isLoggedIn'],
     profile: [],
     profileFollower: [],
     profileFollowing: [],
     showBrowsePage: [],
     tutorialDetail: [],
-    newTutorial: [],
-    editTutorial: [],
-    newVideo: [],
-    editVideo: [],
+    newTutorial: ['isLoggedIn'],
+    editTutorial: ['isLoggedIn'],
+    newVideo: ['isLoggedIn'],
+    editVideo: ['isLoggedIn'],
     showVideo: [],
     editProfile: ['isLoggedIn'],
     signin: ['isLoggedOut'],
@@ -45,20 +45,20 @@ module.exports.policies = {
   TutorialsController: {
     searchTutorials: [],
     browseTutorials: [],
-    rateTutorial: [],
-    createTutorial: [],
-    updateTutorial: [],
-    addVideo: [],
-    updateVideo: [],
-    deleteTutorial: [],
-    removeVideo: [],
+    rateTutorial: ['isLoggedIn'],
+    createTutorial: ['isLoggedIn'],
+    updateTutorial: ['isLoggedIn'],
+    addVideo: ['isLoggedIn'],
+    updateVideo: ['isLoggedIn'],
+    deleteTutorial: ['isLoggedIn'],
+    removeVideo: ['isLoggedIn'],
   },
 
   RatingController: {},
 
   UserController: {
-    follow: [],
-    unfollow: [],
+    follow: ['isLoggedIn'],
+    unfollow: ['isLoggedIn'],
     login: ['isLoggedOut'],
     logout: ['isLoggedIn'],
     signup: ['isLoggedOut'],
@@ -76,8 +76,8 @@ module.exports.policies = {
   },
 
   VideosController: {
-    reorderVideoUp: [],
-    reorderVideoDown: [],
-    chat: []
+    reorderVideoUp: ['isLoggedIn'],
+    reorderVideoDown: ['isLoggedIn'],
+    chat: ['isLoggedIn']
   }
 };
