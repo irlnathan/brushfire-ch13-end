@@ -16,10 +16,15 @@ angular.module('brushfire').controller('showVideoPageController', ['$scope', '$h
     loading: false
   };
 
+  $scope.hasJoinedRoom = true;
+
   $scope.me = window.SAILS_LOCALS.me;
 
   // Get the video id form the current URL path:  /tutorials/1/videos/3/show
   $scope.fromUrlVideoId = window.location.pathname.split('/')[4];
+
+  // Expose chats on the scope so we can render them with ng-repeat.
+  $scope.chats = window.SAILS_LOCALS.chats;
 
 /* 
   _____   ____  __  __   ______               _       
@@ -46,6 +51,5 @@ angular.module('brushfire').controller('showVideoPageController', ['$scope', '$h
     .finally(function eitherway(){
 
     });
-
   };
 }]);

@@ -985,6 +985,13 @@ module.exports = {
 
   showVideo: function(req, res) {
 
+    // Simulating a found video
+    var video = {
+      id: 34,
+      title: 'Crockford on JavaScript - Volume 1: The Early Years',
+      src: 'https://www.youtube.com/embed/JxAXlJEmNMg'
+    };
+
     FAKE_CHAT = [{
       username: 'sails-in-action',
       message: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur bibendum ornare.',
@@ -1032,43 +1039,37 @@ module.exports = {
       gravatarURL: 'http://www.gravatar.com/avatar/ef3eac6c71fdf24b13db12d8ff8d1264'
     }];
 
-    // Find the video to play
-    Video.findOne({
-      id: +req.param('id')
-    }).exec(function (err, foundVideo){
+    // If not logged in
+    if (!req.session.userId) {
+      return res.view('show-video', {
+        me: null,
+        video: video,
+        tutorialId: req.param('tutorialId'),
+        chats: FAKE_CHAT
+      });
+    }
 
-      // If not logged in
-      if (!req.session.userId) {
-        return res.view('show-video', {
-          me: null,
-          video: foundVideo,
-          tutorialId: req.param('tutorialId'),
-          chat: FAKE_CHAT
-        });
+    // If logged in...
+    User.findOne({
+      id: +req.session.userId
+    }).exec(function (err, foundUser) {
+      if (err) {
+        return res.negotiate(err);
       }
 
-      // If logged in...
-      User.findOne({
-        id: +req.session.userId
-      }).exec(function (err, foundUser) {
-        if (err) {
-          return res.negotiate(err);
-        }
+      if (!foundUser) {
+        sails.log.verbose('Session refers to a user who no longer exists- did you delete a user, then try to refresh the page with an open tab logged-in as that user?');
+      }
 
-        if (!foundUser) {
-          sails.log.verbose('Session refers to a user who no longer exists- did you delete a user, then try to refresh the page with an open tab logged-in as that user?');
-        }
-
-        return res.view('show-video', {
-          me: {
-            username: foundUser.username,
-            gravatarURL: foundUser.gravatarURL,
-            admin: foundUser.admin
-          },
-          video: foundVideo,
-          tutorialId: req.param('tutorialId'),
-          chat: FAKE_CHAT
-        });
+      return res.view('show-video', {
+        me: {
+          username: foundUser.username,
+          gravatarURL: foundUser.gravatarURL,
+          admin: foundUser.admin
+        },
+        video: video,
+        tutorialId: req.param('tutorialId'),
+        chats: FAKE_CHAT
       });
     });
   }
